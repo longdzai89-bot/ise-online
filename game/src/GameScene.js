@@ -11,60 +11,99 @@ class GameScene extends Phaser.Scene {
     this.lives = 3;
     this.coins = 0;
 
-    // --- Tilemap ---
+    // ── Tilemap ─────────────────────────────────────────────────────
     const map = this.make.tilemap({ key: 'level1' });
+
+    // Tên phải khớp với trường "name" trong level1.json tilesets[]
     const tilesTile = map.addTilesetImage('tileset-tiles', 'tiles');
     const tilesChar = map.addTilesetImage('tileset-characters', 'characters');
 
-    // Background layer (layer index 0 = Tiles)
-    const layerBg = map.createLayer('Tiles', [tilesTile, tilesChar], 0, 0);
-    if (layerBg) {
-      layerBg.setCollisionByExclusion([-1, 0]);
+    if (!tilesTile) {
+      console.error('[GameScene] addTilesetImage("tileset-tiles") trả null — kiểm tra level1.json');
+    }
+    if (!tilesChar) {
+      console.error('[GameScene] addTilesetImage("tileset-characters") trả null — kiểm tra level1.json');
     }
 
-    // Layer A
-    const layerA = map.createLayer('Tiles (layer A)', [tilesTile, tilesChar], 0, 0);
-
-    // Layer B
-    const layerB = map.createLayer('Tiles (layer B)', [tilesTile, tilesChar], 0, 0);
-
-    // Scale tilemap 2x cho rõ trên màn hình
     const SCALE = 2.2;
-    if (layerBg) layerBg.setScale(SCALE);
+
+    // Layer nền — dùng để collision
+    const layerBg = map.createLayer('Tiles', [tilesTile, tilesChar], 0, 0);
+    if (layerBg) {
+      layerBg.setScale(SCALE);
+      layerBg.setCollisionByExclusion([-1, 0]);
+    } else {
+      console.error('[GameScene] Không tạo được layer "Tiles"');
+    }
+
+    // Layer trang trí A & B (không collision)
+    const layerA = map.createLayer('Tiles (layer A)', [tilesTile, tilesChar], 0, 0);
     if (layerA) layerA.setScale(SCALE);
+
+    const layerB = map.createLayer('Tiles (layer B)', [tilesTile, tilesChar], 0, 0);
     if (layerB) layerB.setScale(SCALE);
 
-    const mapWidth = map.widthInPixels * SCALE;
+    const mapWidth  = map.widthInPixels  * SCALE;
     const mapHeight = map.heightInPixels * SCALE;
 
-    // --- Player (character tile 0 = đứng) ---
-    this.player = this.physics.add.sprite(80, mapHeight - 100, 'characters');
+    // ── Animations ───────────────────────────────────────────────────
+    // tilemap-characters_packed.png: 9 cột × 3 hàng = 27 frame (24×24)
+    // Hàng 0 (frame 0-8):  idle / walk player
+    // Hàng 1 (frame 9-17): enemy / item
+    // Hàng 2 (frame 18-26): misc
+    if (!this.anims.exists('walk')) {
+      this.anims.create({
+        key: 'walk',
+        frames: this.anims.generateFrameNumbers('characters', { start: 1, end: 2 }),
+        frameRate: 8,
+        repeat: -1
+      });
+    }
+    if (!this.anims.exists('idle')) {
+      this.anims.create({
+        key: 'idle',
+        frames: [{ key: 'characters', frame: 0 }],
+        frameRate: 1
+      });
+    }
+    if (!this.anims.exists('jump')) {
+      this.anims.create({
+        key: 'jump',
+        frames: [{ key: 'characters', frame: 3 }],
+        frameRate: 1
+      });
+    }
+
+    // ── Player ────────────────────────────────────────────────────────
+    const spawnY = layerBg ? mapHeight - 100 : 300;
+    this.player = this.physics.add.sprite(80, spawnY, 'characters');
     this.player.setFrame(0);
     this.player.setScale(SCALE * 1.2);
     this.player.setCollideWorldBounds(true);
     this.player.body.setGravityY(200);
 
-    // Collision player vs tilemap
-    if (layerBg) this.physics.add.collider(this.player, layerBg);
+    if (layerBg) {
+      this.physics.add.collider(this.player, layerBg);
+    }
 
-    // --- Enemies (character tiles 6-10) ---
+    // ── Enemies ───────────────────────────────────────────────────────
     this.enemies = this.physics.add.group();
     const enemyPositions = [
-      { x: 300, y: mapHeight - 100 },
-      { x: 500, y: mapHeight - 180 },
-      { x: 700, y: mapHeight - 100 },
+      { x: 300 * SCALE / 2, y: mapHeight - 100 },
+      { x: 500 * SCALE / 2, y: mapHeight - 180 },
+      { x: 700 * SCALE / 2, y: mapHeight - 100 },
     ];
     enemyPositions.forEach((pos, i) => {
       const en = this.enemies.create(pos.x, pos.y, 'characters');
-      en.setFrame(6 + (i % 5));
+      en.setFrame(9 + (i % 3));   // hàng 1 = enemy frames
       en.setScale(SCALE);
-      en.setVelocityX(i % 2 === 0 ? 60 : -60);
+      en.setVelocityX(i % 2 === 0 ? 80 : -80);
       en.setBounceX(1);
       en.setCollideWorldBounds(true);
       if (layerBg) this.physics.add.collider(en, layerBg);
     });
 
-    // --- Coins (character tile 11-14) ---
+    // ── Coins ─────────────────────────────────────────────────────────
     this.coinGroup = this.physics.add.staticGroup();
     const coinPositions = [
       { x: 200, y: mapHeight - 160 },
@@ -79,7 +118,6 @@ class GameScene extends Phaser.Scene {
       c.refreshBody();
     });
 
-    // Collect coins
     this.physics.add.overlap(this.player, this.coinGroup, (player, coin) => {
       coin.destroy();
       this.coins++;
@@ -88,7 +126,7 @@ class GameScene extends Phaser.Scene {
       this.events.emit('updateCoins', this.coins);
     });
 
-    // Hit enemy
+    // ── Enemy collision ───────────────────────────────────────────────
     this.physics.add.overlap(this.player, this.enemies, (player, enemy) => {
       if (player.body.velocity.y > 0 && player.y < enemy.y - 10) {
         enemy.destroy();
@@ -100,74 +138,51 @@ class GameScene extends Phaser.Scene {
       }
     });
 
-    // --- Camera ---
+    // ── Camera & world bounds ─────────────────────────────────────────
+    this.physics.world.setBounds(0, 0, mapWidth, mapHeight);
     this.cameras.main.setBounds(0, 0, mapWidth, mapHeight);
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
-    this.physics.world.setBounds(0, 0, mapWidth, mapHeight);
 
-    // --- Input ---
+    // ── Input ─────────────────────────────────────────────────────────
     this.cursors = this.input.keyboard.createCursorKeys();
     this.wasd = this.input.keyboard.addKeys({
-      up: Phaser.Input.Keyboard.KeyCodes.W,
-      left: Phaser.Input.Keyboard.KeyCodes.A,
+      up:    Phaser.Input.Keyboard.KeyCodes.W,
+      left:  Phaser.Input.Keyboard.KeyCodes.A,
       right: Phaser.Input.Keyboard.KeyCodes.D
     });
-
-    // Mobile touch controls
     this.setupTouchControls();
 
-    // Player animation frames (walk: 1,2 / idle: 0 / jump: 3)
-    this.anims.create({
-      key: 'walk',
-      frames: this.anims.generateFrameNumbers('characters', { start: 1, end: 2 }),
-      frameRate: 8,
-      repeat: -1
-    });
-    this.anims.create({
-      key: 'idle',
-      frames: [{ key: 'characters', frame: 0 }],
-      frameRate: 1
-    });
-    this.anims.create({
-      key: 'jump',
-      frames: [{ key: 'characters', frame: 3 }],
-      frameRate: 1
-    });
-
     this.isInvincible = false;
-    this.touchLeft = false;
-    this.touchRight = false;
-    this.touchJump = false;
+    this.touchLeft    = false;
+    this.touchRight   = false;
+    this.touchJump    = false;
 
-    // Check level complete - cờ đích ở cuối map
     this.goalX = mapWidth - 100;
   }
 
   setupTouchControls() {
-    // Vùng trái - chạy trái
-    const zoneL = this.add.zone(0, 0, 200, 540).setOrigin(0, 0).setInteractive();
+    // Vùng chạy trái (1/4 trái màn hình)
+    const zoneL = this.add.zone(0, 0, 240, 540).setOrigin(0, 0).setInteractive();
     zoneL.setScrollFactor(0);
     zoneL.on('pointerdown', () => { this.touchLeft = true; });
-    zoneL.on('pointerup', () => { this.touchLeft = false; });
-    zoneL.on('pointerout', () => { this.touchLeft = false; });
+    zoneL.on('pointerup',   () => { this.touchLeft = false; });
+    zoneL.on('pointerout',  () => { this.touchLeft = false; });
 
-    // Vùng phải - chạy phải
-    const zoneR = this.add.zone(200, 0, 560, 540).setOrigin(0, 0).setInteractive();
+    // Vùng chạy phải (giữa)
+    const zoneR = this.add.zone(240, 0, 480, 540).setOrigin(0, 0).setInteractive();
     zoneR.setScrollFactor(0);
     zoneR.on('pointerdown', () => { this.touchRight = true; });
-    zoneR.on('pointerup', () => { this.touchRight = false; });
-    zoneR.on('pointerout', () => { this.touchRight = false; });
+    zoneR.on('pointerup',   () => { this.touchRight = false; });
+    zoneR.on('pointerout',  () => { this.touchRight = false; });
 
-    // Vùng nhảy - 1/4 phải
-    const zoneJ = this.add.zone(760, 0, 200, 540).setOrigin(0, 0).setInteractive();
+    // Vùng nhảy (1/4 phải)
+    const zoneJ = this.add.zone(720, 0, 240, 540).setOrigin(0, 0).setInteractive();
     zoneJ.setScrollFactor(0);
     zoneJ.on('pointerdown', () => {
-      if (this.player.body.blocked.down) {
+      if (this.player && this.player.body.blocked.down) {
         this.player.setVelocityY(-520);
-        this.touchJump = true;
       }
     });
-    zoneJ.on('pointerup', () => { this.touchJump = false; });
   }
 
   playerHit() {
@@ -193,10 +208,10 @@ class GameScene extends Phaser.Scene {
     if (!this.player || !this.player.active) return;
 
     const onGround = this.player.body.blocked.down;
-    const left = this.cursors.left.isDown || this.wasd.left.isDown || this.touchLeft;
+    const left  = this.cursors.left.isDown  || this.wasd.left.isDown  || this.touchLeft;
     const right = this.cursors.right.isDown || this.wasd.right.isDown || this.touchRight;
-    const jump = Phaser.Input.Keyboard.JustDown(this.cursors.up) ||
-                 Phaser.Input.Keyboard.JustDown(this.wasd.up);
+    const jump  = Phaser.Input.Keyboard.JustDown(this.cursors.up) ||
+                  Phaser.Input.Keyboard.JustDown(this.wasd.up);
 
     if (left) {
       this.player.setVelocityX(-200);
@@ -225,7 +240,7 @@ class GameScene extends Phaser.Scene {
       this.scene.start('LevelCompleteScene', { score: this.score, coins: this.coins });
     }
 
-    // Fall death
+    // Rơi xuống hố
     if (this.player.y > this.physics.world.bounds.height + 100) {
       this.playerHit();
       this.player.setPosition(80, 300);

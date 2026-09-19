@@ -24,14 +24,14 @@
     },
     {
       "firstgid": 28,
-      "name": "tileset-tiles",
-      "image": "../images/tilemap_packed.png",
-      "imagewidth": 360,
-      "imageheight": 162,
-      "tilewidth": 18,
-      "tileheight": 18,
-      "tilecount": 180,
-      "columns": 20,
+      "name": "tileset-characters",
+      "image": "../images/tilemap-characters_packed.png",
+      "imagewidth": 216,
+      "imageheight": 72,
+      "tilewidth": 24,
+      "tileheight": 24,
+      "tilecount": 27,
+      "columns": 9,
       "margin": 0,
       "spacing": 1
     }
