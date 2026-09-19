@@ -1,0 +1,12 @@
+{
+  "appId": "com.iseonline.game",
+  "appName": "ISE Online",
+  "webDir": "game",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "minWebViewVersion": 60,
+    "allowMixedContent": true
+  }
+}
