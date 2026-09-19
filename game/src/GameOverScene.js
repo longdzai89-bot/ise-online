@@ -1,46 +1,38 @@
 class GameOverScene extends Phaser.Scene {
   constructor() { super({ key: 'GameOverScene' }); }
-
   init(data) { this.finalScore = data.score || 0; }
 
   create() {
-    const bg = this.add.image(480, 270, 'gameover');
-    bg.setDisplaySize(960, 540);
+    this.add.image(480, 270, 'gameover').setDisplaySize(960, 540);
 
-    this.add.text(480, 360, 'SCORE: ' + this.finalScore, {
-      fontSize: '28px', fill: '#ffffff',
-      fontFamily: 'monospace', stroke: '#000', strokeThickness: 5
+    this.add.text(480, 340, 'ĐIỂM: ' + this.finalScore, {
+      fontSize: '32px', fill: '#fff', fontFamily: 'monospace',
+      stroke: '#000', strokeThickness: 5
     }).setOrigin(0.5);
 
-    // Nút Retry
-    const retry = this.add.image(360, 440, 'btn-hud');
-    retry.setDisplaySize(180, 72);
-    retry.setInteractive({ useHandCursor: true });
-    retry.on('pointerover', () => retry.setScale(1.05));
-    retry.on('pointerout', () => retry.setScale(1));
+    // Retry
+    const retry = this.add.image(340, 440, 'btn-hud').setDisplaySize(180, 72).setInteractive();
+    retry.on('pointerover', () => retry.setScale(1.07));
+    retry.on('pointerout',  () => retry.setScale(1));
     retry.on('pointerdown', () => {
-      this.scene.start('GameScene');
-      this.scene.start('HUDScene');
       this.scene.stop('GameOverScene');
+      this.scene.start('GameScene');
+      this.scene.launch('HUDScene');
     });
-    this.add.text(360, 440, 'RETRY', {
-      fontSize: '20px', fill: '#fff',
-      fontFamily: 'monospace', stroke: '#000', strokeThickness: 3
+    this.add.text(340, 440, 'THỬ LẠI', {
+      fontSize: '18px', fill: '#fff', fontFamily: 'monospace', stroke: '#000', strokeThickness: 3
     }).setOrigin(0.5);
 
-    // Nút Menu
-    const menu = this.add.image(600, 440, 'btn-play');
-    menu.setDisplaySize(180, 72);
-    menu.setInteractive({ useHandCursor: true });
-    menu.on('pointerover', () => menu.setScale(1.05));
-    menu.on('pointerout', () => menu.setScale(1));
+    // Menu
+    const menu = this.add.image(620, 440, 'btn-play').setDisplaySize(180, 72).setInteractive();
+    menu.on('pointerover', () => menu.setScale(1.07));
+    menu.on('pointerout',  () => menu.setScale(1));
     menu.on('pointerdown', () => {
-      this.scene.start('MenuScene');
       this.scene.stop('GameOverScene');
+      this.scene.start('MenuScene');
     });
-    this.add.text(600, 440, 'MENU', {
-      fontSize: '20px', fill: '#fff',
-      fontFamily: 'monospace', stroke: '#000', strokeThickness: 3
+    this.add.text(620, 440, 'MENU', {
+      fontSize: '18px', fill: '#fff', fontFamily: 'monospace', stroke: '#000', strokeThickness: 3
     }).setOrigin(0.5);
 
     this.cameras.main.fadeIn(400);
