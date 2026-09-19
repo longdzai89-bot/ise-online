@@ -17,10 +17,10 @@ class MenuScene extends Phaser.Scene {
     // Nút PLAY
     const btn = this.add.image(480, 340, 'btn-play').setDisplaySize(260, 104);
     btn.setInteractive({ useHandCursor: true });
-    btn.on('pointerover', () => btn.setScale(1.08));
-    btn.on('pointerout',  () => btn.setScale(1.0));
+    btn.on('pointerover', () => btn.setTint(0xddffdd));
+    btn.on('pointerout',  () => { btn.clearTint(); btn.setAlpha(1); });
     btn.on('pointerdown', () => {
-      btn.setScale(0.95);
+      btn.setAlpha(0.85);
       this.cameras.main.fadeOut(300, 0, 0, 0);
       this.cameras.main.once('camerafadeoutcomplete', () => {
         this.scene.stop('MenuScene');

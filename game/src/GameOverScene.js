@@ -12,8 +12,8 @@ class GameOverScene extends Phaser.Scene {
 
     // Retry
     const retry = this.add.image(340, 440, 'btn-hud').setDisplaySize(180, 72).setInteractive();
-    retry.on('pointerover', () => retry.setScale(1.07));
-    retry.on('pointerout',  () => retry.setScale(1));
+    retry.on('pointerover', () => retry.setTint(0xddffdd));
+    retry.on('pointerout',  () => retry.clearTint());
     retry.on('pointerdown', () => {
       this.scene.stop('GameOverScene');
       this.scene.start('GameScene');
@@ -25,8 +25,8 @@ class GameOverScene extends Phaser.Scene {
 
     // Menu
     const menu = this.add.image(620, 440, 'btn-play').setDisplaySize(180, 72).setInteractive();
-    menu.on('pointerover', () => menu.setScale(1.07));
-    menu.on('pointerout',  () => menu.setScale(1));
+    menu.on('pointerover', () => menu.setTint(0xddffdd));
+    menu.on('pointerout',  () => menu.clearTint());
     menu.on('pointerdown', () => {
       this.scene.stop('GameOverScene');
       this.scene.start('MenuScene');
