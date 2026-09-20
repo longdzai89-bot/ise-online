@@ -114,8 +114,8 @@ class GameScene extends Phaser.Scene {
     this.cameras.main.fadeIn(300);
 
     // ── Input ────────────────────────────────────────────────────────
-    this.cursors = this.input.keyboard.createCursorKeys();
-    this.wasd = this.input.keyboard.addKeys({
+    this.cursors = this.input.keyboard?.createCursorKeys() ?? {};
+    this.wasd = this.input.keyboard?.addKeys({
       up:    Phaser.Input.Keyboard.KeyCodes.W,
       left:  Phaser.Input.Keyboard.KeyCodes.A,
       right: Phaser.Input.Keyboard.KeyCodes.D,
@@ -178,10 +178,10 @@ class GameScene extends Phaser.Scene {
     if (!this.player?.active) return;
 
     const onGround = this.player.body.blocked.down;
-    const left  = this.cursors.left.isDown  || this.wasd.left.isDown  || this.touchLeft;
-    const right = this.cursors.right.isDown || this.wasd.right.isDown || this.touchRight;
-    const jump  = Phaser.Input.Keyboard.JustDown(this.cursors.up) ||
-                  Phaser.Input.Keyboard.JustDown(this.wasd.up);
+    const left  = this.cursors?.left?.isDown  || this.wasd?.left?.isDown  || this.touchLeft;
+    const right = this.cursors?.right?.isDown || this.wasd?.right?.isDown || this.touchRight;
+    const jump  = this.cursors?.up && Phaser.Input.Keyboard.JustDown(this.cursors.up) ||
+                  this.wasd?.up && Phaser.Input.Keyboard.JustDown(this.wasd.up);
 
     const SPEED = 210;
 
